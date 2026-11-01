@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const exphbs = require('express-handlebars');
 require('dotenv').config();
-const stripe = require('stripe');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 var app = express();
 
@@ -26,7 +26,7 @@ app.get('/', function(req, res) {
 /**
  * Checkout route
  */
-app.get('/checkout', function(req, res) {
+app.get('/checkout', async function(req, res) {
   // Just hardcoding amounts here to avoid using a database
   const item = req.query.item;
   let title, amount, error;
@@ -49,19 +49,48 @@ app.get('/checkout', function(req, res) {
       error = "No item selected"      
       break;
   }
+if (error) {
+  return res.render('checkout', {
+    title: title,
+    amount: amount,
+    error: error,
+  });
+}
 
+  try {
+//Create PaymentIntent to make request to Stripe API
+      const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: 'usd',
+      automatic_payment_methods: {
+        enabled: true,
+  },
+});
+  console.log('PaymentIntent created:', paymentIntent.id);
+  
   res.render('checkout', {
     title: title,
     amount: amount,
-    error: error
+    client_secret: paymentIntent.client_secret,
+    publishable_key: process.env.STRIPE_PUBLISHABLE_KEY
   });
+  
+//handle error 
+} catch (err) {
+  console.error(err);
+  res.status(500).render('checkout',
+    {title: title, 
+      amount: amount,
+    error:'unable to set up payment. Please try again.'});
+}
 });
-
 /**
  * Success route
  */
 app.get('/success', function(req, res) {
-  res.render('success');
+  res.render('success',{
+    publishable_key: process.env.STRIPE_PUBLISHABLE_KEY
+  });
 });
 
 /**

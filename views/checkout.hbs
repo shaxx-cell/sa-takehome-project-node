@@ -19,8 +19,9 @@
             <label for="email">Email address</label>
             <input type="email" class="form-control" id="email" name="email" placeholder="you@email.com">
           </div>
-          <div class="mt-20 text-center text-secondary border-placeholder">
-            Add Stripe Element here!
+          <div class="mt-20" id="payment-element">
+          </div>
+          <div id="error-message" class="text-danger mt-20" role="alert">
           </div>
           <div class="mt-20">
             <button type="submit" class="btn btn-lg btn-block btn-primary">Pay $<span class="amount" data-amount="{{amount}}"></span></button>
@@ -30,3 +31,47 @@
     </div>
   </div>
 </div>
+
+<script>
+  const stripe = Stripe('{{publishable_key}}');
+  //render form using the clientSecret
+  const options = {
+    clientSecret:'{{client_secret}}',
+  };
+
+  const elements = stripe.elements(options);
+  //create and mount the payment element 
+  const paymentElement = elements.create('payment');
+  paymentElement.mount('#payment-element')
+  
+  //await for submit
+  const form = document.querySelector('form[name="payment-form"]');
+  const submitButton = form.querySelector('button');
+  
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    
+  //UI safeguard: disable button to prevent double clicks
+  submitButton.disabled = true;
+  document.querySelector('#error-message').textContent = '';
+
+  // Trigger form validation
+  const {error: submitError } = await elements.submit();
+  if (submitError){
+    return
+  }
+
+  //Confirm Payment
+  const {error } = await stripe.confirmPayment ({
+    elements, 
+    confirmParams: {
+      return_url:'http://localhost:3000/success',
+    },
+  });
+  //in case there's any errors
+    if (error){
+     document.querySelector('#error-message').textContent = error.message;
+     sbumitButton.disable = false; 
+    }
+  });
+</script>

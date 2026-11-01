@@ -2,12 +2,37 @@
   <div class="mt-40 text-center text-success">
     <h1>
       <i class="far fa-check-circle"></i> 
-      Success!
+      Payemnt Successful!
     </h1>
   </div>
   <div class="mt-40 text-center">
-    <div class="mt-20 text-center text-secondary border-placeholder">
-      Add details about the payment here!
-    </div>
+    <div class="mt-40">
+    <h4>Payment Details</h4>
+    <p><strong>PaymentIntent ID:</strong> <span id="pi-id">Loading...</span></p>
+    <p><strong>Amount Charged:</strong> $<span id="pi-amount">Loading...</span></p>
+  </div>
   </div>
 </main>
+
+<script>
+  // initialize Stripe
+  const stripe = Stripe('{{publishable_key}}');
+
+  //Get the URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const clientSecret = urlParams.get('payment_intent_client_secret');
+
+  //retrieve the paymentIntent using client secret 
+  if (clientSecret) {
+    stripe.retrievePaymentIntent(clientSecret).then(({ paymentIntent }) => {
+      //populate the HTML with ID and Amount
+      document.querySelector('#pi-id').textContent = paymentIntent.id;
+
+      //stripe returns amounts in cents, need to get dollars 
+      document.querySelector('#pi-amount').textContent = (paymentIntent.amount / 100).toFixed(2);
+    });
+  } else {
+    document.querySelector('#pi-id').textContent = "Missing payment details";
+
+  }
+  </script>
