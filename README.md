@@ -21,6 +21,8 @@ To simplify this project, we're also not using any database here, either. Instea
 ## Configuration
 
 1.create a .env file in the root directory (refer to sample.env)
+
+
 2.add your Stripe test keys: 
 
 ```

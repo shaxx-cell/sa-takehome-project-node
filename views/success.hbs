@@ -1,8 +1,8 @@
 <main>
   <div class="mt-40 text-center text-success">
-    <h1>
+    <h1 id="status-heading">
       <i class="far fa-check-circle"></i> 
-      Payemnt Successful!
+      Payment Successful!
     </h1>
   </div>
   <div class="mt-40 text-center">
@@ -25,14 +25,30 @@
   //retrieve the paymentIntent using client secret 
   if (clientSecret) {
     stripe.retrievePaymentIntent(clientSecret).then(({ paymentIntent }) => {
+      
       //populate the HTML with ID and Amount
       document.querySelector('#pi-id').textContent = paymentIntent.id;
 
-      //stripe returns amounts in cents, need to get dollars 
+
+      //Success: money moved
+      if (paymentIntent.status === 'succeeded'){
       document.querySelector('#pi-amount').textContent = (paymentIntent.amount / 100).toFixed(2);
-    });
-  } else {
-    document.querySelector('#pi-id').textContent = "Missing payment details";
+    }
+  
+      //Processing: The payment is pending 
+    else if (paymentIntent.status === 'processing'){
+      document.querySelector('#pi-amount').textContent = "Processing...";
+      document.querySelector('#status-heading').textContent = "Payment Processing...";
+    }
+      //Failed:
+      else {
+    document.querySelector('#pi-amount').textContent = "0.00";
+    document.querySelector('#status-heading').textContent = "Payment Failed";
 
   }
+     }); 
+     //no payment details 
+  } else { 
+    document.querySelector('#pi-id').textContent = "Missing payment details";
+  } 
   </script>
